@@ -162,6 +162,9 @@ Browser
 - [x] Pushed to GitHub: https://github.com/mustafanoman128/BHP
 - [x] Deployed to Render: https://bhp-y0gi.onrender.com (free tier, no CC required)
 - [x] Auto-deploy on push configured (Render GitHub integration)
+- [x] Project cleaned up — removed unused files (Model/, bhp.service, nginx.conf, IDE folders, notebook exports)
+- [x] .gitignore added — excludes .idea/, .vscode/, __pycache__, venv/
+- [x] Interview guide created (BHP Interview Guide.html)
 
 ## 8. What's Next
 

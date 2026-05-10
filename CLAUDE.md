@@ -36,6 +36,8 @@ Real Estate Prediction/
 ├── Code and Data (Jupyter NB)/
 │   ├── Bengaluru_House_Data.csv   # Raw training data — used at runtime for location stats
 │   └── House Price Prediction Project.ipynb
+├── BHP Interview Guide.html       # Interview prep — open in browser, print to PDF
+├── .gitignore                     # Excludes .idea/, .vscode/, __pycache__, venv/
 ├── CLAUDE.md                      # This file
 └── PRD.md                         # Product Requirements Document
 ```
@@ -119,6 +121,17 @@ python server.py
 - **Start command**: `gunicorn --bind 0.0.0.0:$PORT server:app`
 - **Auto-deploy**: Yes — every push to `main` triggers a redeploy on Render
 - **Sleep behaviour**: Free tier sleeps after 15 min of inactivity; first request takes ~30s to wake up
+
+---
+
+## Memory Files
+Persistent memory for this project is stored at:
+`C:\Users\musta\.claude\projects\c--Users-musta-Desktop-PROJECTS-Real-Estate-Prediction\memory\`
+
+- `MEMORY.md` — index of all memory files
+- `project_deployment.md` — live URL, platform, current project state
+- `user_profile.md` — Mustafa's background and preferences
+- `feedback_deployment.md` — confirmed rules for how to collaborate on this project
 
 ---
 
