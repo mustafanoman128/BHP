@@ -158,7 +158,7 @@ The UI is built to feel like a real estate product — not a university project.
 
 ## Author
 
-Built by **Mustafa** · [github.com/mustafanoman128](https://github.com/mustafanoman128)
+Built by **Mustafa** · [linkedin.com/in/mustafanoman128](https://www.linkedin.com/in/mustafanoman128/)
 
 ---
 
