@@ -2,8 +2,10 @@
 # Bengaluru Home Price Predictor
 
 **Author:** Mustafa  
-**Status:** Built & Deploying  
-**Last Updated:** May 2026
+**Status:** Built & Live  
+**Last Updated:** May 2026  
+**Live URL:** https://bhp-y0gi.onrender.com  
+**GitHub:** https://github.com/mustafanoman128/BHP
 
 ---
 
@@ -95,20 +97,21 @@ location comparison tool.
 Browser
   └── Client/ (HTML + CSS + JS)
         └── jQuery AJAX calls
-              └── Nginx (port 80 on EC2)
-                    ├── Static files → serves Client/ directly
-                    └── /predict_home_price, /get_location_names
-                          └── Gunicorn (127.0.0.1:5000)
-                                └── Flask (server.py + util.py)
+              └── Render Web Service (https://bhp-y0gi.onrender.com)
+                    └── Gunicorn (port 10000)
+                          └── Flask (server.py + util.py)
+                                ├── Serves Client/ as static files (GET /)
+                                ├── GET  /get_location_names
+                                └── POST /predict_home_price
                                       └── scikit-learn Linear Regression model
 ```
 
 ### Backend
-- **Flask** — REST API (2 endpoints)
-- **Gunicorn** — production WSGI server (1 worker, t2.micro safe)
+- **Flask** — REST API (2 endpoints) + serves frontend as static files
+- **Gunicorn** — production WSGI server (Render manages process)
 - **scikit-learn** — model inference
 - **pandas + numpy** — data processing at startup (location stats)
-- **systemd** — keeps Gunicorn alive, auto-restarts on crash/reboot
+- **Render** — cloud hosting (free tier Web Service, auto-deploys from GitHub)
 
 ### Frontend
 - **Vanilla JS + jQuery** — no framework overhead
@@ -116,11 +119,11 @@ Browser
 - **BASE_URL auto-detection** — same JS works locally and in production
 
 ### Deployment
-- **Cloud**: AWS EC2, t2.micro (free tier, 1 vCPU, 1GB RAM)
-- **OS**: Ubuntu Server 22.04 LTS
-- **Web server**: Nginx 
-- **CI/CD**: Manual (git pull on EC2 to update)
+- **Cloud**: Render (free tier Web Service, no credit card required)
+- **Live URL**: https://bhp-y0gi.onrender.com
 - **Repo**: https://github.com/mustafanoman128/BHP
+- **CI/CD**: Auto-deploy on push to `main` branch (Render GitHub integration)
+- **Start command**: `gunicorn --chdir Server --bind 0.0.0.0:$PORT server:app`
 
 ---
 
@@ -155,13 +158,15 @@ Browser
 - [x] Feature 5: Location comparison (animated bar chart)
 - [x] Feature 6: Area average context badge
 - [x] Deployment prep: requirements.txt, BASE_URL fix, Artifacts path fix
-- [x] EC2 deployment files: bhp.service, nginx.conf
+- [x] Flask serves frontend as static files (single service for both frontend + API)
 - [x] Pushed to GitHub: https://github.com/mustafanoman128/BHP
+- [x] Deployed to Render: https://bhp-y0gi.onrender.com (free tier, no CC required)
+- [x] Auto-deploy on push configured (Render GitHub integration)
 
 ## 8. What's Next
 
-- [ ] SSH into EC2 and complete server setup
-- [ ] Verify app is live at EC2 public IP
-- [ ] (Optional) Point a custom domain at the EC2 IP
-- [ ] (Optional) Add HTTPS via Let's Encrypt / Certbot
-- [ ] (Optional) Set up automatic deploys (git pull script or GitHub Actions)
+- [ ] (Optional) Upgrade Render plan to avoid cold starts (~30s on free tier)
+- [ ] (Optional) Point a custom domain at the Render service
+- [ ] (Optional) Add HTTPS custom certificate (Render provides free TLS by default)
+- [ ] (Optional) Retrain model with more recent Bengaluru listings data
+- [ ] (Optional) Add more cities beyond Bengaluru
