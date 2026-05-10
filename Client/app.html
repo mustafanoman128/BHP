@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bengaluru Home Price Predictor</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="app.css">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+
+    <div class="bg-overlay"></div>
+
+    <div class="page-wrapper">
+
+        <div class="hero-title">
+            <h1>Bengaluru <span class="highlight">Home Price</span> Predictor</h1>
+            <p>Get an instant estimate based on location, size &amp; configuration</p>
+        </div>
+
+        <div class="card">
+
+            <div class="form-group">
+                <label for="uiSqft">Area (Square Feet)</label>
+                <input type="number" id="uiSqft" class="input-field" placeholder="Enter area in sq ft" value="1000" min="100">
+            </div>
+
+            <div class="form-group">
+                <label>BHK (Bedrooms)</label>
+                <div class="toggle-group">
+                    <input type="radio" id="radio-bhk-1" name="uiBHK" value="1"/>
+                    <label for="radio-bhk-1">1</label>
+                    <input type="radio" id="radio-bhk-2" name="uiBHK" value="2" checked/>
+                    <label for="radio-bhk-2">2</label>
+                    <input type="radio" id="radio-bhk-3" name="uiBHK" value="3"/>
+                    <label for="radio-bhk-3">3</label>
+                    <input type="radio" id="radio-bhk-4" name="uiBHK" value="4"/>
+                    <label for="radio-bhk-4">4</label>
+                    <input type="radio" id="radio-bhk-5" name="uiBHK" value="5"/>
+                    <label for="radio-bhk-5">5</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Bathrooms</label>
+                <div class="toggle-group">
+                    <input type="radio" id="radio-bath-1" name="uiBathrooms" value="1"/>
+                    <label for="radio-bath-1">1</label>
+                    <input type="radio" id="radio-bath-2" name="uiBathrooms" value="2" checked/>
+                    <label for="radio-bath-2">2</label>
+                    <input type="radio" id="radio-bath-3" name="uiBathrooms" value="3"/>
+                    <label for="radio-bath-3">3</label>
+                    <input type="radio" id="radio-bath-4" name="uiBathrooms" value="4"/>
+                    <label for="radio-bath-4">4</label>
+                    <input type="radio" id="radio-bath-5" name="uiBathrooms" value="5"/>
+                    <label for="radio-bath-5">5</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="uiLocations">Location</label>
+                <select id="uiLocations"></select>
+            </div>
+
+            <button class="btn-estimate" onclick="onClickedEstimatePrice()">
+                Get Price Estimate
+                <span class="btn-arrow">&#8594;</span>
+            </button>
+
+            <div id="uiEstimatedPrice" class="result-box hidden">
+                <div class="result-label">Estimated Price</div>
+                <div class="result-value"></div>
+                <div class="result-sqft"></div>
+                <div class="result-context"></div>
+                <div class="result-range"></div>
+            </div>
+
+            <div id="uiEMI" class="emi-box hidden">
+                <div class="emi-header">EMI Calculator</div>
+                <div class="emi-inputs">
+                    <div class="emi-field">
+                        <div class="emi-field-label">Down Payment</div>
+                        <div class="emi-input-wrap">
+                            <input type="number" id="uiDownPayment" value="20" min="0" max="90" inputmode="decimal">
+                            <span class="emi-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="emi-field">
+                        <div class="emi-field-label">Interest Rate</div>
+                        <div class="emi-input-wrap">
+                            <input type="number" id="uiInterestRate" value="8.5" min="1" max="20" step="0.1" inputmode="decimal">
+                            <span class="emi-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="emi-field">
+                        <div class="emi-field-label">Tenure</div>
+                        <div class="emi-input-wrap">
+                            <input type="number" id="uiTenure" value="20" min="1" max="30" inputmode="numeric">
+                            <span class="emi-unit">yr</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="emi-results">
+                    <div class="emi-result-item">
+                        <div class="emi-result-label">Loan Amount</div>
+                        <div class="emi-result-value" id="uiLoanAmount">—</div>
+                    </div>
+                    <div class="emi-result-divider"></div>
+                    <div class="emi-result-item">
+                        <div class="emi-result-label">Monthly EMI</div>
+                        <div class="emi-result-value emi-highlight" id="uiMonthlyEMI">—</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="uiCompare" class="compare-card hidden">
+            <div class="compare-heading">
+                <div class="compare-title">Compare Locations</div>
+                <div class="compare-subtitle">Same config &middot; different areas</div>
+            </div>
+            <div class="compare-selects">
+                <select id="uiCompare1"></select>
+                <select id="uiCompare2"></select>
+            </div>
+            <button class="btn-compare" onclick="onClickedCompare()">
+                Compare <span class="btn-arrow">&#8594;</span>
+            </button>
+            <div id="uiCompareResults" class="compare-results hidden"></div>
+        </div>
+
+        <p class="footer-note">Powered by Linear Regression &middot; 240+ Bengaluru locations &middot; ~85% accuracy</p>
+
+    </div>
+
+</body>
+</html>
