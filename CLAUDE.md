@@ -1,13 +1,17 @@
-# Bengaluru Home Price Predictor — Claude Context
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+**Live URL:** https://bhp-y0gi.onrender.com  
+**GitHub:** https://github.com/mustafanoman128/BHP
+
+---
 
 ## What This Project Is
 A full-stack web application that predicts residential property prices in Bengaluru, India.
 A user inputs square footage, BHK, bathrooms, and location — the app returns a price estimate
 in Lakhs (Indian Rupees), along with supporting context: price range, per-sqft rate, area
 average comparison badge, EMI calculator, and a side-by-side location comparison bar chart.
-
-**Live URL:** https://bhp-y0gi.onrender.com  
-**GitHub:** https://github.com/mustafanoman128/BHP
 
 ---
 
@@ -16,6 +20,61 @@ average comparison badge, EMI calculator, and a side-by-side location comparison
 - **Backend**: Python 3, Flask, Gunicorn (production WSGI server)
 - **Frontend**: Vanilla HTML/CSS/JS, jQuery, Tom Select (searchable dropdown)
 - **Deployment**: Render (free tier Web Service) — auto-deploys on every push to `main`
+
+---
+
+## Commands
+
+```bash
+# Run the app locally (from Server/ directory)
+cd Server
+python server.py
+# → http://127.0.0.1:5000
+
+# Smoke-test the ML model and util functions directly
+cd Server
+python util.py
+# Prints location names + sample predictions for known/unknown locations
+
+# Install dependencies
+pip install -r Server/requirements.txt
+
+# Deploy (Render auto-deploys on push — no manual step needed)
+git add . && git commit -m "..." && git push
+```
+
+There are no automated tests or linting configs in this project.
+
+---
+
+## Architecture
+
+### Request flow
+```
+Browser (Client/)
+  → jQuery AJAX
+    → Flask (Server/server.py)
+      → util.py: get_estimated_price() + get_location_context()
+        → scikit-learn model (Artifacts/banglore_home_prices_model.pickle)
+        → location stats dict (computed from CSV at startup)
+```
+
+Flask also serves `Client/` as static files — there is no separate web server. One process handles both the API and the frontend.
+
+### Startup sequence (critical)
+`util.load_saved_artifacts()` is called at **module level** in `server.py` — not inside `if __name__ == '__main__'`. This is intentional: Gunicorn imports the module rather than running it as a script, so the model must load at import time. Moving this call breaks production.
+
+### util.py internals
+- Four module-level globals: `__model`, `__data_columns`, `__locations`, `__location_stats`
+- `__data_columns[0:3]` = `[total_sqft, bath, bhk]`; `__data_columns[3:]` = 240 location dummies
+- Unknown locations (not in training data) silently fall back to all-zeros for location features — model still returns a prediction via the intercept
+- `__parse_sqft()` handles range strings like `"1000-1500"` by averaging them
+- `__location_stats` is a `{location_name: mean_price_per_sqft}` dict; if CSV is missing it stays `{}` and the area badge silently disappears — everything else still works
+
+### Frontend (Client/app.js)
+- `BASE_URL` auto-detects: `http://127.0.0.1:5000` on localhost, `''` (relative) everywhere else — never hardcode an IP
+- Bar chart animation: widths are set to `0` on DOM insert, then actual widths applied after a 60ms `setTimeout` to trigger the CSS transition
+- Location comparison fires two API requests in parallel, not sequentially
 
 ---
 
@@ -44,54 +103,6 @@ Real Estate Prediction/
 
 ---
 
-## How to Run Locally
-```bash
-# Start Flask server (from Server/ directory)
-cd Server
-python server.py
-# Server runs on http://127.0.0.1:5000
-# Open Client/app.html in browser — BASE_URL auto-detects localhost
-```
-
----
-
-## Key Files — What They Do
-
-### Server/server.py
-- `load_saved_artifacts()` called at **module level** (top of file) so Gunicorn triggers it
-- `serve_frontend()` — serves `Client/app.html` at `/` using Flask static file serving
-- `CLIENT_DIR` computed via `os.path.abspath(__file__)` so path is correct regardless of working directory
-- `GET /get_location_names` — returns list of 240 Bengaluru locations
-- `GET/POST /predict_home_price` — returns `estimated_price` + `context` (area average comparison)
-- Flask `static_folder` points to `../Client` — serves app.css, app.js automatically
-
-### Server/util.py
-- `load_saved_artifacts()` — loads pickle model + columns.json + computes location stats from CSV
-- `get_estimated_price(location, sqft, bhk, bath)` — runs the Linear Regression model
-- `get_location_context(location, price_per_sqft)` — compares prediction against area average
-- `__compute_location_stats()` — reads CSV at startup, computes mean price/sqft per location
-- Artifact paths use `os.path.abspath(__file__)` — works correctly on Linux (case-sensitive)
-- CSV path: `../Code and Data (Jupyter NB)/Bengaluru_House_Data.csv` relative to Server/
-
-### Client/app.js
-- `BASE_URL` auto-detects environment:
-  - `http://127.0.0.1:5000` when on localhost (local dev)
-  - `''` (relative URLs) when on any other host (Render, EC2, etc.)
-- `onPageLoad()` — fetches locations, initialises all 3 Tom Select dropdowns
-- `onClickedEstimatePrice()` — calls predict endpoint, populates result + EMI + compare card
-- `calculateEMI()` — pure frontend math, live recalculation on every input change
-- `onClickedCompare()` — fires parallel requests for up to 2 comparison locations, renders bar chart
-- `renderCompareResults()` — builds animated bar chart sorted by price descending
-
-### Client/app.css
-- Desktop: `height: 100vh; overflow: hidden` — fits everything on one screen
-- `body.has-result` class unlocks scroll when result + EMI + compare appear
-- Tom Select dark theme overrides — matches amber/glass design
-- Media queries: tablet (≤768px), phone (≤480px)
-- Mobile: `min-height: 100dvh`, overflow-y auto, 16px inputs (prevents iOS zoom)
-
----
-
 ## Model Details
 - **Algorithm**: Linear Regression
 - **Features**: 243 (total_sqft, bath, bhk + 240 one-hot encoded Bengaluru locations)
@@ -102,20 +113,8 @@ python server.py
 
 ---
 
-## Features Built (in order)
-1. **Searchable location dropdown** — Tom Select on all 3 location selects (main + 2 compare)
-2. **Price range** — ±15% of estimate: "Likely range: ₹ X – ₹ Y Lakhs"
-3. **Price per sq ft** — `(price * 100000) / sqft`, formatted with Indian locale (en-IN)
-4. **EMI calculator** — standard reducing-balance formula, live recalculation, defaults: 20%/8.5%/20yr
-5. **Location comparison** — up to 3 locations, animated bar chart, sorted by price, current tagged "you"
-6. **Area average context badge** — ▲ above / ▼ below / ● at par, sourced from CSV at startup
-
----
-
 ## Deployment (Render)
 - **Platform**: Render Web Service (free tier)
-- **Live URL**: https://bhp-y0gi.onrender.com
-- **GitHub**: https://github.com/mustafanoman128/BHP
 - **Root directory**: `Server`
 - **Build command**: `pip install -r requirements.txt`
 - **Start command**: `gunicorn --bind 0.0.0.0:$PORT server:app`
@@ -137,8 +136,6 @@ Persistent memory for this project is stored at:
 
 ## Important Notes
 - `Artifacts/` folder is capital A — do NOT rename to lowercase (Linux is case-sensitive)
-- `load_saved_artifacts()` must be at module level in server.py — NOT inside `if __name__ == "__main__"` — so Gunicorn runs it on startup
-- `Bengaluru_House_Data.csv` must exist at `../Code and Data (Jupyter NB)/` relative to Server/ for the area-average badge to work. If missing, badge silently disappears — everything else still works
+- `Bengaluru_House_Data.csv` must exist at `../Code and Data (Jupyter NB)/` relative to `Server/` for the area-average badge to work
 - Tom Select and Google Fonts load from CDN — requires internet in the browser
-- `BASE_URL` in app.js handles local vs production automatically — never hardcode an IP address
-- To update the live app: make changes → `git add . && git commit -m "..." && git push` → Render auto-deploys
+- To update the live app: `git add . && git commit -m "..." && git push` → Render auto-deploys
